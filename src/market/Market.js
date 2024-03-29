@@ -5,18 +5,20 @@ import MarketSearch from './components/MarketSearch';
 import MarketData from './components/MarketData';
 import axios from 'axios';
 import {queries, endpoints} from './index'
+import MarketRegions from './components/MarketRegions';
 
 function Market(){
 
   const[marketGroups, setMarketGroups] = useState (null);
   const[regions, setRegions] = useState(null);
+  const[selectedRegion, setSelectedRegion] = useState(null);
+  const[selectedMarketItem, setSelectedMarketItem] = useState(null);
   
   useEffect(() => {
       axios.post(endpoints.eveBackend, {
         query: queries.getRegions
         }).then(response => {
-          setRegions(response.data.data);
-          console.log(regions)
+          setRegions(response.data.data.getRegions);
         }).catch(error => {
           // Handle errors
           console.error('GraphQL request failed', error);
@@ -34,16 +36,24 @@ function Market(){
       });
   }, [])
 
+  const handleMarketItemUpdate = (id) => {
+    setSelectedMarketItem(id);
+  };
+
+  const handleSelectedRegionUpdate = (id) => {
+    setSelectedRegion(id);
+  }
+
     return <Box sx={{  }}>
             <p>something</p>
             <Box sx={{ position: 'absolute', top:'30px', left:'25vw', width: '50vw', height: '50vh', display:'flex', flexDirection: 'row', border: 1 }}>              
               <Box sx={{ width:'20%', display:'flex', flexDirection: 'column',overflow: 'auto' }}>
+                <MarketRegions regions={regions} selectedRegion={handleSelectedRegionUpdate}/>
                 <MarketSearch/>
-                <MarketSearch/>
-                {marketGroups && <MarketList marketGroups={marketGroups}/>}
+                {marketGroups && <MarketList marketGroups={marketGroups} handleMarketItemUpdate={handleMarketItemUpdate}/>}
               </Box>
               <Box sx={{ width:'80%', display:'flex'}}>
-              <MarketData/>
+              <MarketData selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion}/>
               </Box>
 
             </Box>

@@ -13,7 +13,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ItemGroups({ groups, level = 0 }) {
+
+function ItemGroups({ groups, selectedMarketItem, level = 0 }) {
   const [openGroups, setOpenGroups] = useState([]);
   const classes = useStyles();
 
@@ -25,10 +26,9 @@ function ItemGroups({ groups, level = 0 }) {
     }
   };
 
-  const handleMarketItemsQuery = (id) => {
+  const handleMarketItemUpdate = (id) => {
+    selectedMarketItem(id);
   }
-
-
 
   return (
     <List>
@@ -43,14 +43,14 @@ function ItemGroups({ groups, level = 0 }) {
             {(
               childGroups &&
               childGroups.length > 0 && openGroups.includes(marketGroupId) && (
-                <ItemGroups groups={childGroups} level={level + 2} />
+                <ItemGroups groups={childGroups} selectedMarketItem={selectedMarketItem} level={level + 2} />
               )) ||
               ( openGroups.includes(marketGroupId) &&
                 marketItems &&
                 marketItems.length > 0 && (
                   <List style={{ marginLeft: '16px' }}>
                     {marketItems.map((item) => (
-                      <ListItem key={item.typeId} className={classes.nestedListItem} onClick={() => handleMarketItemsQuery(item.typeId)}>
+                      <ListItem key={item.typeId} className={classes.nestedListItem} onClick={() => handleMarketItemUpdate(item.typeId)}>
                         <ListItemText>
                           <Typography style={{ fontSize: '8px' }}>
                             {item.name}
@@ -69,12 +69,11 @@ function ItemGroups({ groups, level = 0 }) {
 function MarketBrowse(props) {
   const [marketList, setMarketList] = useState(props.marketGroups);
   useEffect(() => {
-    console.log(marketList);
   }, []);
 
   return (
     <div>
-      <ItemGroups groups={props.marketGroups} />
+      <ItemGroups groups={props.marketGroups} selectedMarketItem={props.handleMarketItemUpdate} />
     </div>
   );
 }

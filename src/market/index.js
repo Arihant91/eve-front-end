@@ -12,10 +12,22 @@ export const queries = {
             name
         }
     }
+    `,
+    getMarketData :`
+    
     `
 }
 
+export const restQuery = {
+    getMarketItem: 'markets/'
+}
+
+export const restVersion = {
+    latest: 'latest/'
+}
+
 export const endpoints = {
-    eveBackend : 'http://localhost:8080/graphql'
+    eveBackend : 'http://localhost:8080/graphql',
+    eveTech : 'https://esi.evetech.net/'
 }
 
