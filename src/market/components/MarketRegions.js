@@ -7,12 +7,10 @@ function MarketRegions(props) {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
 
-    // Update loading state when regions change
     useEffect(() => {
-        setLoading(!regions); // If regions is null or undefined, set loading to true
+        setLoading(!regions);
     }, [regions]);
 
-    // Filter regions based on search query
     const filteredRegions = regions ?
         regions.filter(region =>
             region.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -20,7 +18,6 @@ function MarketRegions(props) {
 
     return (
         <div>
-            {/* Search bar with autocomplete dropdown */}
             <Autocomplete
                 options={filteredRegions}
                 getOptionLabel={(option) => option.name}
@@ -38,7 +35,6 @@ function MarketRegions(props) {
                     />
                 )}
             />
-            {/* List of filtered regions (hidden) */}
             <List style={{ display: 'none' }}>
                 {filteredRegions.map(({ id, name }) => (
                     <ListItem button key={id} onClick={() => selectedRegion(id)}>

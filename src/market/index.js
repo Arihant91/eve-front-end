@@ -31,3 +31,4 @@ export const endpoints = {
     eveTech : 'https://esi.evetech.net/'
 }
 
+export const dateFormat = 'YYYY-MM-DD HH:mm';
