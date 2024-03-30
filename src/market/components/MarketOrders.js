@@ -6,7 +6,7 @@ import moment from 'moment';
 
 function MarketOrders(props){
 
-    const { onStationIdsChange, selectedMarketItem, selectedRegion, orderType } = props;
+    const { selectedMarketItem, selectedRegion, orderType } = props;
     const [page, setPage] = useState(1);
     const [items, setItems] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,7 +26,12 @@ function MarketOrders(props){
           axios.get(url)
               .then(response => {
                   if (response.data.length !== 0) {
-                      setItems(response.data);
+                      setItems(response.data.filter(item => {
+                        const locationIdString = String(item.location_id);
+                        if(locationIdString.length === 8){
+                            return item;
+                        }
+                      }));
                   } else {
                       setOrderNotFound(true);
                       setLoading(false);
@@ -45,30 +50,34 @@ function MarketOrders(props){
             item.issued = moment(item.issued).format(dateFormat);
         })
   
-        const stationIDs = [];
+        const url = endpoints.eveTech + restVersion.latest + `universe/names/?datasource=tranquility`;
+        const stationIDs = new Set();
         items.forEach(item => {
-            const locationIdString = String(item.location_id);
-            if (locationIdString.length <= 8) {
-                stationIDs.push(item.location_id);
-            }
-        });
-        onStationIdsChange(stationIDs, orderType);
+                stationIDs.add(item.location_id);
+            });
+        console.log(stationIDs)
+        axios.post(url, Array.from(stationIDs))
+                .then(response => {
+                    const resp = response.data.reduce((acc, data) => {
+                        acc[data.id] = data;
+                        return acc;
+                    }, {});
+                    items.forEach(item => {
+                        item['category'] = resp[item.location_id].category
+                        item['name'] = resp[item.location_id].name
+                    })  
+                    setLoading(false);  
+                })
+                .catch(error => {
+                    console.error('Failed to fetch station names', error);
+                    setLoading(false);
+                });
         
-        setLoading(false);
+        
            
     }
   }, [items]);
 
-  useEffect(() => {
-    console.log('im being called')
-    if(props.stationsData && props.stationsData.length > 0){
-        items.forEach(item => {
-            item['category'] = props.stationsData[item.location_id].category
-            item['name'] = props.stationsData[item.location_id].name
-        })
-    }
-    console.log(items)
-}, [props.stationsData]);
   
   const columns = [
     { field: 'category', headerName: 'Type', flex: 1 },
