@@ -8,7 +8,7 @@ function MarketData(props) {
     const [buyOrderStationIds, setBuyOrderStationIds] = useState([]);
     const [sellOrderStationIds, setSellOrderStationIds] = useState([]);
     const [mergedStationIds, setMergedStationIds] = useState([]);
-    const [stationsData, setStationsData] = useState([]);
+    const [stationsData, setStationsData] = useState({});
 
     useEffect(() => {
         if (buyOrderStationIds.length > 0 && sellOrderStationIds.length > 0){
@@ -25,8 +25,9 @@ function MarketData(props) {
         if(mergedStationIds.length > 0){
             axios.post(url, mergedStationIds)
                 .then(response => {
-                    setStationsData(response.data);
-                    console.log(stationsData)
+                    const resp = {};
+                    response.data.forEach(station => resp[station.id] = station);
+                    setStationsData(resp);
                 })
                 .catch(error => {
                     console.error('Failed to fetch station names', error);
@@ -35,11 +36,6 @@ function MarketData(props) {
                 setSellOrderStationIds([]);
         }
     }, [mergedStationIds]);
-
-    useEffect(() => {
-            setStationsData(stationsData);
-    }, [stationsData])
-
 
     const handleChildStationIds = (ids, orderType) => {
 
@@ -52,12 +48,12 @@ function MarketData(props) {
 
     return (
     <div style={{ height: '100%', width: '100%' }}>
-        <header>sell orders</header>
-        <MarketOrders poi={stationsData} onStationIdsChange={handleChildStationIds} selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion} orderType = {'sell'}/>
-        <header>buy orders</header>
-        <MarketOrders poi={stationsData} onStationIdsChange={handleChildStationIds} selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion} orderType = {'buy'}/>
+        <header style={{ height:'5%', fontSize: '24px', fontWeight: 'bold' }}>sell orders</header>
+        <MarketOrders stationsData={stationsData} onStationIdsChange={handleChildStationIds} selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion} orderType = {'sell'}/>
+        <header style={{height:'5%', fontSize: '24px', fontWeight: 'bold' }}>buy orders</header>
+        <MarketOrders stationsData={stationsData} onStationIdsChange={handleChildStationIds} selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion} orderType = {'buy'}/>
     </div>
     );
 }
-
+ 
 export default MarketData;

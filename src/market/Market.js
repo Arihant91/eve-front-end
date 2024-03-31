@@ -45,17 +45,19 @@ function Market(){
   }
 
     return <Box sx={{  }}>
-            <p>something</p>
-            <Box sx={{ position: 'absolute', top:'30px', left:'25vw', width: '50vw', height: '50vh', display:'flex', flexDirection: 'row', border: 1 }}>              
-              <Box sx={{ width:'20%', display:'flex', flexDirection: 'column',overflow: 'auto' }}>
-                <MarketRegions regions={regions} selectedRegion={handleSelectedRegionUpdate}/>
-                <MarketSearch/>
-                {marketGroups && <MarketList marketGroups={marketGroups} handleMarketItemUpdate={handleMarketItemUpdate}/>}
+            <Box sx={{ position: 'absolute', top:'30px', left:'25vw', width: '50vw', height: '75vh', display:'flex', flexDirection: 'row', border: 1 }}>              
+              <Box sx={{ width:'20%', display:'flex', flexDirection: 'column'}}>
+                <Box sx={{ height: '5%', display:'flex', overflow: 'auto', flexDirection: 'column'}}>
+                  <MarketRegions regions={regions} selectedRegion={handleSelectedRegionUpdate}/>
+                </Box>
+                <Box sx={{ height: '80%', display:'flex', overflow: 'auto', flexDirection: 'column'}}>
+                  <MarketSearch/>
+                  {marketGroups && <MarketList marketGroups={marketGroups} handleMarketItemUpdate={handleMarketItemUpdate}/>}
+                </Box> 
               </Box>
               <Box sx={{ width:'80%', display:'flex'}}>
               <MarketData selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion}/>
               </Box>
-
             </Box>
           </Box>
 }

@@ -26,7 +26,12 @@ function MarketOrders(props){
           axios.get(url)
               .then(response => {
                   if (response.data.length !== 0) {
-                      setItems(response.data);
+                      setItems(response.data.filter( item => {
+                        const locationIdString = String(item.location_id);
+                        if (locationIdString.length === 8) {
+                           return item;
+                        }
+                      }));
                   } else {
                       setOrderNotFound(true);
                       setLoading(false);
@@ -47,27 +52,22 @@ function MarketOrders(props){
   
         const stationIDs = [];
         items.forEach(item => {
-            const locationIdString = String(item.location_id);
-            if (locationIdString.length <= 8) {
                 stationIDs.push(item.location_id);
-            }
         });
         onStationIdsChange(stationIDs, orderType);
-        
-        setLoading(false);
            
     }
   }, [items]);
 
   useEffect(() => {
-    console.log('im being called')
-    if(props.stationsData && props.stationsData.length > 0){
+    if(items && props.stationsData){
+      console.log(items)
         items.forEach(item => {
             item['category'] = props.stationsData[item.location_id].category
             item['name'] = props.stationsData[item.location_id].name
         })
+        setLoading(false);
     }
-    console.log(items)
 }, [props.stationsData]);
   
   const columns = [
@@ -81,14 +81,14 @@ function MarketOrders(props){
   ];
   
   return (
-    <div style={{ height: '50%', width: '100%' }}>
+    <div style={{ height: '45%', width: '100%' }}>
         {loading ? <p>loading...</p>: orderNotFound ?  <p>there are no sell orders</p>:
         <DataGrid
         rows={items}
         columns={columns}
         loading={loading}
         pageSize={50}
-        pageSizeOptions={[]}
+        pageSizeOptions={[100]}
         disableSelectionOnClick 
             getRowId={(row) => row.order_id}
         />
