@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid'; // Import DataGrid from MUI
 import axios from 'axios';
-import { endpoints, restVersion, restQuery, dateFormat } from '../index';
+import { endpoints, restVersion, restQuery, dateFormat } from '../../Constants';
 import moment from 'moment';
 
 function MarketOrders(props){
@@ -90,7 +90,7 @@ function MarketOrders(props){
   ];
   
   return (
-    <div style={{ height: '50%', width: '100%' }}>
+    <div style={{ height: '47%', width: '100%' }}>
         {loading ? <p>loading...</p>: orderNotFound ?  <p>there are no sell orders</p>:
         <DataGrid
         rows={items}

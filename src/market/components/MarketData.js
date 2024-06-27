@@ -1,6 +1,6 @@
 import React, { useEffect, useState }  from 'react';
 import MarketOrders from './MarketOrders';
-import { endpoints, restVersion } from '../index';
+import { endpoints, restVersion } from '../../Constants';
 import axios from 'axios';
 
 function MarketData(props) {

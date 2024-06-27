@@ -4,8 +4,9 @@ import MarketList from './components/MarketList';
 import MarketSearch from './components/MarketSearch';
 import MarketData from './components/MarketData';
 import axios from 'axios';
-import {queries, endpoints} from './index'
+import {queries, endpoints} from '../Constants'
 import MarketRegions from './components/MarketRegions';
+import Navbar from '../navbar/components/Navbar';
 
 function Market(){
 
@@ -45,14 +46,14 @@ function Market(){
   }
 
     return <Box sx={{  }}>
-            <p>something</p>
-            <Box sx={{ position: 'absolute', top:'30px', left:'25vw', width: '50vw', height: '50vh', display:'flex', flexDirection: 'row', border: 1 }}>              
+            <Navbar/>
+            <Box sx={{ position: 'absolute', top:'15%', left:'25vw', width: '50vw', height: '50vh', display:'flex', flexDirection: 'row', border: 1 }}>              
               <Box sx={{ width:'20%', display:'flex', flexDirection: 'column',overflow: 'auto' }}>
                 <MarketRegions regions={regions} selectedRegion={handleSelectedRegionUpdate}/>
                 <MarketSearch/>
                 {marketGroups && <MarketList marketGroups={marketGroups} handleMarketItemUpdate={handleMarketItemUpdate}/>}
               </Box>
-              <Box sx={{ width:'80%', display:'flex'}}>
+              <Box sx={{ width:'80%', height: '100%', display:'flex'}}>
               <MarketData selectedMarketItem={selectedMarketItem} selectedRegion = {selectedRegion}/>
               </Box>
 

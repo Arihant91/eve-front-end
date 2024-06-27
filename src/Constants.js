@@ -1,4 +1,20 @@
 export const queries = {
+    getOrdersMeanInRegion :` 
+    query getOrdersMeanInRegion {
+        getOrdersMeanInRegion(regionId: $regionId, typeId: $typeId, startDate: $startDate, endDate: $endDate,isBuyOrder: $isBuyOrder) {
+            regionId
+            typeId
+            timeOfScraping
+            isBuyOrders
+            avgPrice
+            volumeRemain
+            locationId
+            highestPrice
+            lowestPrice
+            orderCount
+        }
+    }
+    `,
     getMarketDetails : `
     query GetMarketDetails {
         getMarketDetails
@@ -27,7 +43,7 @@ export const restVersion = {
 }
 
 export const endpoints = {
-    eveBackend : 'http://localhost:8080/graphql',
+    eveBackend : 'http://localhost:8060/graphql',
     eveTech : 'https://esi.evetech.net/'
 }
 
