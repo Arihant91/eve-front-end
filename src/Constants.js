@@ -1,24 +1,95 @@
 export const queries = {
-    getOrdersMeanInRegion :` 
-    query getOrdersMeanInRegion {
-        getOrdersMeanInRegion(regionId: $regionId, typeId: $typeId, startDate: $startDate, endDate: $endDate,isBuyOrder: $isBuyOrder) {
+    getOrdersStatsByRegion :` 
+    query getOrdersStatsByRegion {
+        getOrdersStatsByRegion(regionId: $regionId, typeId: $typeId, startDate: $startDate, endDate: $endDate,isBuyOrder: $isBuyOrder) {
             regionId
             typeId
             timeOfScraping
             isBuyOrders
             avgPrice
             volumeRemain
-            locationId
             highestPrice
             lowestPrice
             orderCount
+            medianPrice
+            stdDeviation
         }
     }
     `,
     getMarketDetails : `
     query GetMarketDetails {
-        getMarketDetails
+        getMarketDetails {
+        parentGroupId
+        marketGroupId
+        name
+        marketItems {
+            name
+            groupId
+            marketGroupId
+            typeId
+        }
+        childGroups {
+            parentGroupId
+            marketGroupId
+            name
+            marketItems {
+                name
+                groupId
+                marketGroupId
+                typeId
+            }
+            childGroups {
+                parentGroupId
+                marketGroupId
+                name
+                marketItems {
+                    name
+                    groupId
+                    marketGroupId
+                    typeId
+                }
+                childGroups {
+                    parentGroupId
+                    marketGroupId
+                    name
+                    marketItems {
+                        name
+                        groupId
+                        marketGroupId
+                        typeId
+                    }
+                    childGroups {
+                        parentGroupId
+                        marketGroupId
+                        name
+                        marketItems {
+                            name
+                            groupId
+                            marketGroupId
+                            typeId
+                        }
+                        childGroups {
+                            parentGroupId
+                            marketGroupId
+                            name
+                            marketItems {
+                                name
+                                groupId
+                                marketGroupId
+                                typeId
+                            }
+                            childGroups {
+                                parentGroupId
+                                marketGroupId
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+}
     `,
     getRegions : `
     query GetRegions {
@@ -28,6 +99,18 @@ export const queries = {
             name
         }
     }
+    `,
+    getAllItems : `
+    query GetAllItems {
+        getAllItems {
+            key
+            items {
+                name
+                id
+            }
+        }
+    }
+
     `,
     getMarketData :`
     

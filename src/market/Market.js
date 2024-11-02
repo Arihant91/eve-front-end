@@ -10,7 +10,7 @@ import Navbar from '../navbar/components/Navbar';
 
 function Market(){
 
-  const[marketGroups, setMarketGroups] = useState (null);
+  const[marketGroups, setMarketGroups] = useState ([]);
   const[regions, setRegions] = useState(null);
   const[selectedRegion, setSelectedRegion] = useState(null);
   const[selectedMarketItem, setSelectedMarketItem] = useState(null);
@@ -21,18 +21,16 @@ function Market(){
         }).then(response => {
           setRegions(response.data.data.getRegions);
         }).catch(error => {
-          // Handle errors
           console.error('GraphQL request failed', error);
       });
       axios.post(endpoints.eveBackend, {
           query: queries.getMarketDetails,
         })
         .then(response => {
-          // Handle the response
-          setMarketGroups(JSON.parse(response.data.data.getMarketDetails));
+          console.log(response.data.data.getMarketDetails)
+          setMarketGroups(response.data.data.getMarketDetails);
         })
         .catch(error => {
-          // Handle errors
           console.error('GraphQL request failed', error);
       });
   }, [])
