@@ -15,7 +15,17 @@ export const queries = {
             stdDeviation
         }
     }
-    `,
+    `,getStructuresByRegion:
+        `query GetStructuresByRegion {
+            getStructuresByRegion(regionId: $regionId) {
+                regionId
+                structures {
+                    id
+                        name
+                    }
+            }
+        }`
+,
     getMarketDetails : `
     query GetMarketDetails {
         getMarketDetails {

@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Chip, Grid, Checkbox, FormControlLabel, Button, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 
-function OrdersDataForm({ onSubmit, regions, types }) {
-  const [selectedRegionNames, setSelectedRegionNames] = useState([]);
-  const [selectedTypeNames, setSelectedTypeNames] = useState([]);
+function OrdersDataForm({ onSubmit, regions, types, stations, setAcquireRegionStations }) {
+  const [selectedRegions, setSelectedRegions] = useState([]);
+  const [selectedStations, setSelectedStations] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
   const [regionSearchText, setRegionSearchText] = useState('');
+  const [stationSearchText, setStationSearchText] = useState('');
   const [typeSearchText, setTypeSearchText] = useState('');
   const [isOpenRegion, setIsOpenRegion] = useState(false);
+  const [isOpenStation, setIsOpenStation] = useState(false);
   const [isOpenType, setIsOpenType] = useState(false);
   const [isBuyOrder, setIsBuyOrder] = useState(false);
+  const [isStationSearch, setIsStationSearch] = useState(false);
   const [startDateTime, setStartDateTime] = useState(null);
   const [endDateTime, setEndDateTime] = useState(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
+
+  // useEffect(() => {
+  //   if(isOpenStation && selectedRegions.length === 1){
+  //     setAcquireRegionStations(selectedRegions[0]);
+  //   }
+  // },[isOpenStation, selectedRegions, setAcquireRegionStations]);
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -27,51 +37,74 @@ function OrdersDataForm({ onSubmit, regions, types }) {
     setDialogOpen(true);
   };
 
-  const handleTypeSelect = (typeName) => {
-    if (selectedTypeNames.length > 0 && selectedRegionNames.length > 1) {
+  const handleTypeSelect = (type) => {
+    if (selectedTypes.length > 0 && selectedRegions.length > 1) {
       showDialogMessage("You can only select one type while multiple regions are selected.");
     } else {
-      setSelectedTypeNames((prev) => [...prev, typeName]);
+      setSelectedTypes((prev) => [...prev, type]);
+      console.log(typeSearchText)
       setTypeSearchText('');
       setIsOpenType(false);
     }
   };
 
-  const handleRegionSelect = (regionName) => {
-    if (selectedRegionNames.length > 0 && selectedTypeNames.length > 1) {
-      showDialogMessage("You can only select one region while multiple types are selected.");
+  const handleStationSelect = (type) => {
+    if (selectedRegions.length > 1) {
+      showDialogMessage("You can only select one region when searching for stations.");
     } else {
-      setSelectedRegionNames((prev) => [...prev, regionName]);
+      setSelectedStations((prev) => [...prev, type]);
+      setStationSearchText('');
+      setIsOpenStation(false);
+    }
+  };
+
+  const handleRegionSelect = (region) => {
+    if (selectedRegions.length > 0 && selectedTypes.length > 1 ) {
+      showDialogMessage("You can only select one region while multiple types are selected.");
+    } else if(selectedRegions.length >= 1 && isOpenStation) {
+      showDialogMessage("You can only select one region while searching in stations")
+    } else {
+      setSelectedRegions((prev) => [...prev, region]);
+      console.log(regionSearchText)
       setRegionSearchText('');
       setIsOpenRegion(false);
     }
   };
 
   const handleTypeRemove = (typeName) => {
-    setSelectedTypeNames((prevSelected) => prevSelected.filter((name) => name !== typeName));
+    setSelectedTypes((prevSelected) => prevSelected.filter((type) => type.name !== typeName));
   };
 
   const handleRegionRemove = (regionName) => {
-    setSelectedRegionNames((prevSelected) => prevSelected.filter((name) => name !== regionName));
+    setSelectedRegions((prevSelected) => prevSelected.filter(region => region.name !== regionName));
+  };
+  const handleStationRemove = (stationName) => {
+    setSelectedStations((prevSelected) => prevSelected.filter(station => station.name !== stationName));
   };
 
-  const filteredRegions = (regions || [])
-    .filter((region) =>
-      region.name.toLowerCase().includes(regionSearchText.toLowerCase()) &&
-      !selectedRegionNames.includes(region.name)
+  const filteredRegions = (regions || []).filter((region) =>{
+    return region.name.toLowerCase().includes(regionSearchText.toLowerCase()) &&
+      !selectedRegions.includes(region)
+  }
     );
 
-  const filteredTypes = (types || []).flatMap((type) => {
-    if (typeSearchText.length > 0 && type.key === typeSearchText[0].toLowerCase()) {
-      return type.items.filter(({ name }) =>
-        name.toLowerCase().includes(typeSearchText.toLowerCase()) &&
-        !selectedTypeNames.includes(name)
+  const filteredStations = (stations || []).filter((station) =>{
+    return station.name.toLowerCase().includes(stationSearchText.toLowerCase()) &&
+      !selectedStations.includes(station.name)
+  }
+    );
+
+
+
+  const filteredTypes = (types || []).flatMap((firstCharHashMap) => {
+    if (typeSearchText.length > 0 && firstCharHashMap.key === typeSearchText[0].toLowerCase()) {
+      return firstCharHashMap.items.filter((type) =>
+        type.name.toLowerCase().includes(typeSearchText.toLowerCase()) &&
+        !selectedTypes.includes(type.name)
       );
     }
     return [];
   });
-
-  
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -79,8 +112,8 @@ function OrdersDataForm({ onSubmit, regions, types }) {
       const formattedStartDateTime = format(startDateTime, 'yyyy-MM-dd HH');
       const formattedEndDateTime = format(endDateTime, 'yyyy-MM-dd HH');
       onSubmit({
-        selectedRegionNames,
-        selectedTypeNames,
+        selectedRegions,
+        selectedTypes,
         isBuyOrder,
         formattedStartDateTime,
         formattedEndDateTime,
@@ -100,19 +133,19 @@ function OrdersDataForm({ onSubmit, regions, types }) {
               <Select
                 multiple
                 open={isOpenRegion}
-                value={selectedRegionNames}
+                value={selectedRegions}
                 onOpen={() => setIsOpenRegion(true)}
                 onClose={() => setIsOpenRegion(false)}
                 MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((regionName) => (
+                    {selected.map(region => (
                       <Chip
-                        key={regionName}
-                        label={regionName}
+                        key={region.id}
+                        label={region.name}
                         onDelete={(e) => {
                           e.stopPropagation();
-                          handleRegionRemove(regionName);
+                          handleRegionRemove(region.name);
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                       />
@@ -125,6 +158,7 @@ function OrdersDataForm({ onSubmit, regions, types }) {
                   placeholder="Search regions..."
                   value={regionSearchText}
                   onChange={(e) => setRegionSearchText(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsOpenRegion(true);
@@ -137,7 +171,7 @@ function OrdersDataForm({ onSubmit, regions, types }) {
                   <MenuItem
                     key={region.id}
                     value={region.name}
-                    onClick={() => handleRegionSelect(region.name)}
+                    onClick={() => handleRegionSelect(region)}
                   >
                     {region.name}
                   </MenuItem>
@@ -151,19 +185,19 @@ function OrdersDataForm({ onSubmit, regions, types }) {
               <Select
                 multiple
                 open={isOpenType}
-                value={selectedTypeNames}
+                value={selectedTypes}
                 onOpen={() => setIsOpenType(true)}
                 onClose={() => setIsOpenType(false)}
                 MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((typeName) => (
+                    {selected.map(type => (
                       <Chip
-                        key={typeName}
-                        label={typeName}
+                        key={type.id}
+                        label={type.name}
                         onDelete={(e) => {
                           e.stopPropagation();
-                          handleTypeRemove(typeName);
+                          handleTypeRemove(type.name);
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                       />
@@ -176,6 +210,7 @@ function OrdersDataForm({ onSubmit, regions, types }) {
                   placeholder="Search types..."
                   value={typeSearchText}
                   onChange={(e) => setTypeSearchText(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsOpenType(true);
@@ -188,7 +223,7 @@ function OrdersDataForm({ onSubmit, regions, types }) {
                   <MenuItem
                     key={type.id}
                     value={type.name}
-                    onClick={() => handleTypeSelect(type.name)}
+                    onClick={() => handleTypeSelect(type)}
                   >
                     {type.name}
                   </MenuItem>
@@ -197,11 +232,67 @@ function OrdersDataForm({ onSubmit, regions, types }) {
             </FormControl>
           </Grid>
           <Grid item xs={12}>
+            {/*<FormControlLabel*/}
+            {/*    control={<Checkbox checked={isStationSearch} onChange={(e) => setIsStationSearch(e.target.checked)} />}*/}
+            {/*    label="Search By Stations"*/}
+            {/*/>*/}
             <FormControlLabel
               control={<Checkbox checked={isBuyOrder} onChange={(e) => setIsBuyOrder(e.target.checked)} />}
               label="Is Buy Order"
             />
           </Grid>
+          {/*{isStationSearch &&*/}
+          {/*<Grid item xs={12} sm={6}>*/}
+          {/*  <FormControl fullWidth>*/}
+          {/*    <InputLabel>Stations</InputLabel>*/}
+          {/*    <Select*/}
+          {/*        multiple*/}
+          {/*        open={isOpenStation}*/}
+          {/*        value={selectedStations}*/}
+          {/*        onOpen={() => setIsOpenStation(true)}*/}
+          {/*        onClose={() => setIsOpenStation(false)}*/}
+          {/*        MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}*/}
+          {/*        renderValue={(selected) => (*/}
+          {/*            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>*/}
+          {/*              {selected.map(station => (*/}
+          {/*                  <Chip*/}
+          {/*                      key={station.id}*/}
+          {/*                      label={station.name}*/}
+          {/*                      onDelete={(e) => {*/}
+          {/*                        e.stopPropagation();*/}
+          {/*                        handleStationRemove(station.name);*/}
+          {/*                      }}*/}
+          {/*                      onMouseDown={(e) => e.stopPropagation()}*/}
+          {/*                  />*/}
+          {/*              ))}*/}
+          {/*            </Box>*/}
+          {/*        )}*/}
+          {/*    >*/}
+          {/*      <TextField*/}
+          {/*          autoFocus*/}
+          {/*          placeholder="Search stations..."*/}
+          {/*          value={stationSearchText}*/}
+          {/*          onChange={(e) => setStationSearchText(e.target.value)}*/}
+          {/*          onClick={(e) => {*/}
+          {/*            e.stopPropagation();*/}
+          {/*            setIsOpenStation(true);*/}
+          {/*          }}*/}
+          {/*          fullWidth*/}
+          {/*          variant="standard"*/}
+          {/*          sx={{ mx: 2, my: 1 }}*/}
+          {/*      />*/}
+          {/*      {filteredStations.map((station) => (*/}
+          {/*          <MenuItem*/}
+          {/*              key={station.id}*/}
+          {/*              value={station.name}*/}
+          {/*              onClick={() => handleStationSelect(station)}*/}
+          {/*          >*/}
+          {/*            {station.name}*/}
+          {/*          </MenuItem>*/}
+          {/*      ))}*/}
+          {/*    </Select>*/}
+          {/*  </FormControl>*/}
+          {/*</Grid>}*/}
           <Grid item xs={12} sm={6}>
             <DateTimePicker
               label="Start DateTime"

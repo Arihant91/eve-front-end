@@ -5,6 +5,7 @@ import Navbar from '../navbar/components/Navbar';
 function Home(){
   return<Box sx={{  }}>
           <Navbar/>
+      <p>Welcome to my Page</p>
         </Box>;
 }
 

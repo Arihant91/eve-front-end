@@ -3,14 +3,23 @@ import { Box, Typography } from '@mui/material';
 import Navbar from '../navbar/components/Navbar';
 import axios from 'axios';
 import { endpoints, queries } from '../Constants';
-import { CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line, LineChart } from 'recharts';
 import OrdersDataForm from './OrdersDataForm'; 
+import OrdersLineChart from './OrdersLineChart';
 
 function Graphs() {
+  const [acquireRegionStations, setAcquireRegionStations] = useState(null);
+  const [graphDataAvgPrice, setGraphDataAvgPrice] = useState({});
+  const [graphDataHighestPrice, setGraphDataHighestPrice] = useState({});
+  const [graphDataLowestPrice, setGraphDataLowestPrice] = useState({});
+  const [graphDataMedianPrice, setGraphDataMedianPrice] = useState({});
+  const [graphDataOrderCount, setGraphDataOrderCount] = useState({});
+  const [graphDataVolumeRemain, setGraphDataVolumeRemain] = useState({});
+  const [graphDataStdDeviation, setGraphDataStdDeviation] = useState({});
   const [ordersMean, setOrdersMean] = useState([]);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [regions, setRegions] = useState(null);
+  const [stations, setStations] = useState(null);
   const [items, setItems] = useState(null)
 
   useEffect(() => {
@@ -53,19 +62,20 @@ function Graphs() {
   useEffect(() => {
     const fetchOrdersMean = async () => {
       if (!formData) return;
-
       try {
+        let selectedRegionIds = formData.selectedRegions.map(region => region.id);
+        let selectedTypeIds = formData.selectedTypes.map(type => type.id)
+        
         const query = queries.getOrdersStatsByRegion
-          .replace("$regionId", formData.selectedRegionNames.join(','))
-          .replace("$typeId", formData.selectedTypeNames)
-          .replace("$isBuyOrder", formData.isBuyOrder)
-          .replace("$startDate", String(formData.formattedStartDateTime))
-          .replace("$endDate", String(formData.formattedEndDateTime));
+            .replace("$regionId", JSON.stringify(selectedRegionIds))
+            .replace("$typeId", JSON.stringify(selectedTypeIds))
+            .replace("$isBuyOrder", formData.isBuyOrder ? "true" : "false")
+            .replace("$startDate", `"${formData.formattedStartDateTime}"`)
+            .replace("$endDate", `"${formData.formattedEndDateTime}"`);
         const response = await axios.post(endpoints.eveBackend, { query });
         if (response.data && response.data.data && response.data.data.getOrdersStatsByRegion) {
           setOrdersMean(response.data.data.getOrdersStatsByRegion);
         } else {
-          console.log(response)
           console.error('Error fetching orders: unexpected data format', response.data);
         }
       } catch (error) {
@@ -76,8 +86,81 @@ function Graphs() {
     fetchOrdersMean();
   }, [formData]);
 
+  useEffect(() => {
+    if(acquireRegionStations) {
+      const fetchStations = async () => {
+        try {
+          const query = queries.getStructuresByRegion
+              .replace("$regionId", JSON.stringify(acquireRegionStations.id))
+
+          const response = await axios.post(endpoints.eveBackend, {query});
+          if (response.data && response.data.data && response.data.data.getStructuresByRegion) {
+            setStations(response.data.data.getStructuresByRegion);
+          } else {
+            console.error('Error fetching regions: unexpected data format', response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching stations:', error);
+        }
+      }
+      fetchStations();
+    }
+  }, [acquireRegionStations]);
+
+
+  useEffect(() => {
+    if (formData && regions) {
+      const uniqueTimeList = Array.from(new Set(ordersMean.map(item => item.timeOfScraping)))
+        .sort((a, b) => new Date(a) - new Date(b));
+  
+      const entityIdsInOrders = Array.from(
+        new Set(
+          (formData.selectedTypes.length === 1 ? formData.selectedRegions : formData.selectedTypes).map(item => item.id)
+        )
+      );
+
+      let entities;
+      if(formData.selectedTypes.length === 1) {
+        entities = formData.selectedRegions;
+      } else {
+        entities = formData.selectedTypes;
+      }
+      const generateMetricData = (metric) => {
+        return uniqueTimeList.map(time => {
+          const entry = { timeOfScraping: time };
+          entityIdsInOrders.forEach(entityId => {
+            const regionEntry = formData.selectedTypes.length === 1 ? ordersMean.find(order => order.regionId === entityId && order.timeOfScraping === time) :
+            ordersMean.find(order => order.typeId === entityId && order.timeOfScraping === time);
+            entry[entityId] = regionEntry ? regionEntry[metric] : null;
+          });
+          return entry;
+        });
+      };
+  
+      const metrics = [
+        { name: "Average price", key: "avgPrice", setter: setGraphDataAvgPrice },
+        { name: "Highest price", key: "highestPrice", setter: setGraphDataHighestPrice },
+        { name: "Lowest price", key: "lowestPrice", setter: setGraphDataLowestPrice },
+        { name: "Median price", key: "medianPrice", setter: setGraphDataMedianPrice },
+        { name: "Order count", key: "orderCount", setter: setGraphDataOrderCount },
+        { name: "Std deviation", key: "stdDeviation", setter: setGraphDataStdDeviation },
+        { name: "Volume remain", key: "volumeRemain", setter: setGraphDataVolumeRemain },
+      ];
+      
+      metrics.forEach(({ name, key, setter }) => {
+        const metricData = generateMetricData(key);
+        setter({
+          dataList: metricData,
+          startDateTime: formData.formattedStartDateTime,
+          endDateTime: formData.formattedEndDateTime,
+          name,
+          entities
+        });
+      });
+    }
+  }, [ordersMean, formData, regions]);
+  
   const handleFormSubmit = (data) => {
-    console.log(data)
     setFormData(data);
   };
 
@@ -87,59 +170,17 @@ function Graphs() {
       {!loading ? (
         <>
           <Typography variant="h5" gutterBottom>Orders Data</Typography>
-          <OrdersDataForm onSubmit={handleFormSubmit} regions={regions} types={items}/>
+          <OrdersDataForm onSubmit={handleFormSubmit} regions={regions} types={items} stations={stations} setAcquireRegionStations={setAcquireRegionStations}/>
           
-          {ordersMean.length > 0 && (
+          {graphDataAvgPrice && graphDataAvgPrice.dataList && graphDataAvgPrice.dataList.length > 0 && (
             <>
-              <Typography variant="h6" gutterBottom>Average Price</Typography>
-              <LineChart width={800} height={400} data={ordersMean}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timeOfScraping" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="avgPrice" stroke="#8884d8" />
-              </LineChart>
-
-              <Typography variant="h6" gutterBottom>Highest Price</Typography>
-              <LineChart width={800} height={400} data={ordersMean}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timeOfScraping" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="highestPrice" stroke="#82ca9d" />
-              </LineChart>
-
-              <Typography variant="h6" gutterBottom>Lowest Price</Typography>
-              <LineChart width={800} height={400} data={ordersMean}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timeOfScraping" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="lowestPrice" stroke="#ffc658" />
-              </LineChart>
-
-              <Typography variant="h6" gutterBottom>Order Count</Typography>
-              <LineChart width={800} height={400} data={ordersMean}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timeOfScraping" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="orderCount" stroke="#ff7300" />
-              </LineChart>
-
-              <Typography variant="h6" gutterBottom>Volume Remain</Typography>
-              <LineChart width={800} height={400} data={ordersMean}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timeOfScraping" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="volumeRemain" stroke="#0088aa" />
-              </LineChart>
+              <OrdersLineChart graphData={graphDataAvgPrice}  />
+              <OrdersLineChart graphData={graphDataHighestPrice}  />
+              <OrdersLineChart graphData={graphDataLowestPrice}  />
+              <OrdersLineChart graphData={graphDataMedianPrice}  />
+              <OrdersLineChart graphData={graphDataOrderCount}  />
+              <OrdersLineChart graphData={graphDataVolumeRemain}  />
+              <OrdersLineChart graphData={graphDataStdDeviation}  />
             </>
           )}
         </>
