@@ -136,7 +136,7 @@ export const restVersion = {
 }
 
 export const endpoints = {
-    eveBackend : 'http://localhost:8060/graphql',
+    eveBackend : 'https://eve-backend.com/graphql',
     eveTech : 'https://esi.evetech.net/'
 }
 
