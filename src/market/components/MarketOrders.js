@@ -72,9 +72,6 @@ function MarketOrders(props){
                     console.error('Failed to fetch station names', error);
                     setLoading(false);
                 });
-        
-        
-           
     }
   }, [items]);
 

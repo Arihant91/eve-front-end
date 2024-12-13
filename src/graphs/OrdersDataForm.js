@@ -22,11 +22,26 @@ function OrdersDataForm({ onSubmit, regions, types, stations, setAcquireRegionSt
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
 
-  // useEffect(() => {
-  //   if(isOpenStation && selectedRegions.length === 1){
-  //     setAcquireRegionStations(selectedRegions[0]);
-  //   }
-  // },[isOpenStation, selectedRegions, setAcquireRegionStations]);
+  useEffect(() => {
+    if(isOpenStation && selectedRegions.length === 1){
+      setAcquireRegionStations(selectedRegions[0]);
+    }
+    if (selectedStations.length > 0 && selectedRegions.length === 0){
+      setSelectedStations([])
+    }
+
+  },[isOpenStation, selectedRegions, setAcquireRegionStations]);
+
+  useEffect(() => {
+    if(!isStationSearch){
+      setSelectedStations([]);
+    }
+    if(selectedRegions.length > 1 && isStationSearch === true){
+      showDialogMessage("You can only select one region when searching for stations.");
+      setIsStationSearch(false);
+    }
+  },[isStationSearch])
+
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -61,11 +76,10 @@ function OrdersDataForm({ onSubmit, regions, types, stations, setAcquireRegionSt
   const handleRegionSelect = (region) => {
     if (selectedRegions.length > 0 && selectedTypes.length > 1 ) {
       showDialogMessage("You can only select one region while multiple types are selected.");
-    } else if(selectedRegions.length >= 1 && isOpenStation) {
+    } else if(selectedStations.length > 0) {
       showDialogMessage("You can only select one region while searching in stations")
     } else {
       setSelectedRegions((prev) => [...prev, region]);
-      console.log(regionSearchText)
       setRegionSearchText('');
       setIsOpenRegion(false);
     }
@@ -112,6 +126,7 @@ function OrdersDataForm({ onSubmit, regions, types, stations, setAcquireRegionSt
       const formattedStartDateTime = format(startDateTime, 'yyyy-MM-dd HH');
       const formattedEndDateTime = format(endDateTime, 'yyyy-MM-dd HH');
       onSubmit({
+        selectedStations,
         selectedRegions,
         selectedTypes,
         isBuyOrder,
@@ -232,93 +247,95 @@ function OrdersDataForm({ onSubmit, regions, types, stations, setAcquireRegionSt
             </FormControl>
           </Grid>
           <Grid item xs={12}>
-            {/*<FormControlLabel*/}
-            {/*    control={<Checkbox checked={isStationSearch} onChange={(e) => setIsStationSearch(e.target.checked)} />}*/}
-            {/*    label="Search By Stations"*/}
-            {/*/>*/}
+            <FormControlLabel
+                control={<Checkbox checked={isStationSearch} onChange={(e) => setIsStationSearch(e.target.checked)} />}
+                label="Search By Stations"
+            />
             <FormControlLabel
               control={<Checkbox checked={isBuyOrder} onChange={(e) => setIsBuyOrder(e.target.checked)} />}
               label="Is Buy Order"
             />
           </Grid>
-          {/*{isStationSearch &&*/}
-          {/*<Grid item xs={12} sm={6}>*/}
-          {/*  <FormControl fullWidth>*/}
-          {/*    <InputLabel>Stations</InputLabel>*/}
-          {/*    <Select*/}
-          {/*        multiple*/}
-          {/*        open={isOpenStation}*/}
-          {/*        value={selectedStations}*/}
-          {/*        onOpen={() => setIsOpenStation(true)}*/}
-          {/*        onClose={() => setIsOpenStation(false)}*/}
-          {/*        MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}*/}
-          {/*        renderValue={(selected) => (*/}
-          {/*            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>*/}
-          {/*              {selected.map(station => (*/}
-          {/*                  <Chip*/}
-          {/*                      key={station.id}*/}
-          {/*                      label={station.name}*/}
-          {/*                      onDelete={(e) => {*/}
-          {/*                        e.stopPropagation();*/}
-          {/*                        handleStationRemove(station.name);*/}
-          {/*                      }}*/}
-          {/*                      onMouseDown={(e) => e.stopPropagation()}*/}
-          {/*                  />*/}
-          {/*              ))}*/}
-          {/*            </Box>*/}
-          {/*        )}*/}
-          {/*    >*/}
-          {/*      <TextField*/}
-          {/*          autoFocus*/}
-          {/*          placeholder="Search stations..."*/}
-          {/*          value={stationSearchText}*/}
-          {/*          onChange={(e) => setStationSearchText(e.target.value)}*/}
-          {/*          onClick={(e) => {*/}
-          {/*            e.stopPropagation();*/}
-          {/*            setIsOpenStation(true);*/}
-          {/*          }}*/}
-          {/*          fullWidth*/}
-          {/*          variant="standard"*/}
-          {/*          sx={{ mx: 2, my: 1 }}*/}
-          {/*      />*/}
-          {/*      {filteredStations.map((station) => (*/}
-          {/*          <MenuItem*/}
-          {/*              key={station.id}*/}
-          {/*              value={station.name}*/}
-          {/*              onClick={() => handleStationSelect(station)}*/}
-          {/*          >*/}
-          {/*            {station.name}*/}
-          {/*          </MenuItem>*/}
-          {/*      ))}*/}
-          {/*    </Select>*/}
-          {/*  </FormControl>*/}
-          {/*</Grid>}*/}
+          {isStationSearch &&
           <Grid item xs={12} sm={6}>
-            <DateTimePicker
-              label="Start DateTime"
-              value={startDateTime}
-              onChange={(newValue) => setStartDateTime(newValue)}
-              renderInput={(params) => <TextField {...params} required fullWidth />}
-              views={['year', 'month', 'day', 'hours']}
-              ampm={false}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <DateTimePicker
-              label="End DateTime"
-              value={endDateTime}
-              onChange={(newValue) => {
-                if (newValue >= startDateTime) {
-                  setEndDateTime(newValue);
-                } else {
-                  showDialogMessage("End date and time must be after start date and time.");
-                  setEndDateTime(null);
-                }
-              }}
-              minDateTime={startDateTime}
-              views={['year', 'month', 'day', 'hours']}
-              ampm={false}
-            />
+            <FormControl fullWidth>
+              <InputLabel>Stations</InputLabel>
+              <Select
+                  multiple
+                  open={isOpenStation}
+                  value={selectedStations}
+                  onOpen={() => setIsOpenStation(true)}
+                  onClose={() => setIsOpenStation(false)}
+                  MenuProps={{ PaperProps: { style: { maxHeight: 300 } } }}
+                  renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map(station => (
+                            <Chip
+                                key={station.id}
+                                label={station.name}
+                                onDelete={(e) => {
+                                  e.stopPropagation();
+                                  handleStationRemove(station.name);
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                        ))}
+                      </Box>
+                  )}
+              >
+                <TextField
+                    autoFocus
+                    placeholder="Search stations..."
+                    value={stationSearchText}
+                    onChange={(e) => setStationSearchText(e.target.value)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsOpenStation(true);
+                    }}
+                    fullWidth
+                    variant="standard"
+                    sx={{ mx: 2, my: 1 }}
+                />
+                {filteredStations.map((station) => (
+                    <MenuItem
+                        key={station.id}
+                        value={station.name}
+                        onClick={() => handleStationSelect(station)}
+                    >
+                      {station.name}
+                    </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>}
+          <Grid container spacing={2} item xs={24} sm={12}>
+            <Grid item xs={12} sm={6}>
+              <DateTimePicker
+                label="Start DateTime"
+                value={startDateTime}
+                onChange={(newValue) => setStartDateTime(newValue)}
+                renderInput={(params) => <TextField {...params} required fullWidth />}
+                views={['year', 'month', 'day', 'hours']}
+                ampm={false}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <DateTimePicker
+                label="End DateTime"
+                value={endDateTime}
+                onChange={(newValue) => {
+                  if (newValue >= startDateTime) {
+                    setEndDateTime(newValue);
+                  } else {
+                    showDialogMessage("End date and time must be after start date and time.");
+                    setEndDateTime(null);
+                  }
+                }}
+                minDateTime={startDateTime}
+                views={['year', 'month', 'day', 'hours']}
+                ampm={false}
+              />
+            </Grid>
           </Grid>
           <Grid item xs={12}>
             <Button  onClick={handleSubmit} message ="submit" variant="contained" color="primary">

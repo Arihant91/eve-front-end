@@ -15,10 +15,24 @@ export const queries = {
             stdDeviation
         }
     }
-    `,getStructuresByRegion:
+    `,getOrdersStatsByLocation: `query GetOrdersStatsByLocation {
+    getOrdersStatsByLocation(
+        locationId: $locationId, typeId: $typeId, startDate: $startDate, endDate: $endDate, isBuyOrder: $isBuyOrder) {
+        locationId
+        typeId
+        timeOfScraping
+        isBuyOrders
+        avgPrice
+        volumeRemain
+        highestPrice
+        lowestPrice
+        orderCount
+        medianPrice
+        stdDeviation
+    }
+}`,getStructuresByRegion:
         `query GetStructuresByRegion {
             getStructuresByRegion(regionId: $regionId) {
-                regionId
                 structures {
                     id
                         name
@@ -136,7 +150,7 @@ export const restVersion = {
 }
 
 export const endpoints = {
-    eveBackend : 'https://eve-backend.com/graphql',
+    eveBackend : 'http://localhost:8060/graphql',
     eveTech : 'https://esi.evetech.net/'
 }
 
